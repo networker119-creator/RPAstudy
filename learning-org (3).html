@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI를 통한 생산 공정/업무 자동화 — 생산1팀 학습조직</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #dbdbdb;
+  --border-light: #efefef;
+  --text-primary: #262626;
+  --text-secondary: #8e8e8e;
+  --text-muted: #c7c7c7;
+  --accent: #0095f6;
+  --accent-hover: #1877f2;
+  --danger: #ed4956;
+  --success: #58d68d;
+  --gold: #ffd700;
+  --grad1: #f09433;
+  --grad2: #e6683c;
+  --grad3: #dc2743;
+  --grad4: #cc2366;
+  --grad5: #bc1888;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+}
+.nav-logo {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px; font-weight: 600;
+  background: linear-gradient(45deg, var(--grad1), var(--grad3), var(--grad5));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  padding: 7px 14px; border-radius: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  border: none; background: none; color: var(--text-secondary);
+  transition: all .2s;
+}
+.nav-tab.active { background: var(--text-primary); color: #fff; }
+.nav-tab:hover:not(.active) { background: var(--border-light); color: var(--text-primary); }
+.nav-actions { display: flex; gap: 8px; align-items: center; }
+.btn-add {
+  background: linear-gradient(45deg, var(--grad1), var(--grad3), var(--grad5));
+  color: #fff; border: none; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s;
+}
+.btn-add:hover { opacity: .85; }
+
+/* ── MAIN LAYOUT ── */
+main { max-width: 980px; margin: 0 auto; padding: 24px 16px; }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── DASHBOARD ── */
+.dash-header { margin-bottom: 20px; }
+.dash-header h2 { font-size: 18px; font-weight: 600; }
+.dash-header p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+.member-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.member-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+.member-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.member-card-top {
+  padding: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: 52px; height: 52px; flex-shrink: 0;
+}
+.avatar-ring {
+  position: absolute; inset: -2px; border-radius: 50%;
+  background: linear-gradient(45deg, var(--grad1), var(--grad3), var(--grad5));
+  padding: 2px;
+}
+.avatar-ring-inner {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  object-fit: cover; cursor: pointer;
+}
+.avatar-placeholder {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600; color: #fff;
+  cursor: pointer;
+}
+
+.member-info { flex: 1; min-width: 0; }
+.member-name { font-size: 15px; font-weight: 600; }
+.member-role { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.member-week-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 8px;
+  border-radius: 20px; background: var(--border-light);
+  color: var(--text-secondary);
+}
+.member-week-badge.done { background: #e8f5e9; color: #2e7d32; }
+
+.member-card-actions { display: flex; gap: 4px; }
+.btn-icon {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--border); background: none;
+  cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); transition: all .15s;
+}
+.btn-icon:hover { background: var(--border-light); color: var(--text-primary); }
+.btn-icon.danger:hover { background: #fdecea; color: var(--danger); border-color: var(--danger); }
+
+/* Progress bar */
+.progress-section { padding: 0 16px 16px; }
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.progress-label span { font-size: 12px; color: var(--text-secondary); }
+.progress-label strong { font-size: 12px; font-weight: 600; }
+
+.progress-track {
+  position: relative; height: 36px;
+  background: var(--border-light); border-radius: 20px; overflow: visible;
+}
+.progress-weeks {
+  position: absolute; inset: 0;
+  display: flex; border-radius: 20px; overflow: hidden;
+}
+.week-seg {
+  flex: 1; height: 100%; border-right: 1px solid rgba(255,255,255,.3);
+  transition: opacity .2s; cursor: pointer;
+}
+.week-seg:last-child { border-right: none; }
+.week-seg.done {
+  background: linear-gradient(90deg, var(--grad1), var(--grad3), var(--grad4), var(--grad5));
+}
+.week-seg.current {
+  background: linear-gradient(90deg, #ffe082, #ffb300);
+  animation: pulse-seg 2s ease-in-out infinite;
+}
+.week-seg.empty { background: transparent; }
+
+@keyframes pulse-seg { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+.week-labels {
+  display: flex; margin-top: 4px;
+}
+.week-label { flex: 1; text-align: center; font-size: 10px; color: var(--text-muted); }
+.week-label.done { color: var(--grad4); font-weight: 600; }
+
+/* Avatar on bar */
+.bar-avatar {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid #fff;
+  object-fit: cover; pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  z-index: 5;
+  transition: left .5s cubic-bezier(.34,1.56,.64,1);
+}
+.bar-avatar-placeholder {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  z-index: 5;
+  transition: left .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+.week-ctrl {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+}
+.week-ctrl span { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.week-topic-hint {
+  font-size: 11px; color: var(--grad4); font-weight: 500;
+  padding: 4px 0 0 0; min-height: 16px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.week-btn {
+  border: 1px solid var(--border); background: var(--surface);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: 12px; cursor: pointer; font-weight: 500;
+  transition: all .15s;
+}
+.week-btn:hover { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+
+/* ── MODAL ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 28px; width: 360px; max-width: 95vw;
+  animation: fadeUp .25s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+.modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 5px; color: var(--text-secondary); }
+.form-group input, .form-group select {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: inherit;
+  transition: border-color .15s; outline: none;
+  background: var(--surface);
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.photo-upload {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 20px; text-align: center; cursor: pointer;
+  transition: border-color .15s;
+}
+.photo-upload:hover { border-color: var(--accent); }
+.photo-upload-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin: 0 auto 8px; display: block; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+.btn-cancel {
+  flex: 1; padding: 10px; border: 1px solid var(--border);
+  border-radius: 8px; background: none; cursor: pointer;
+  font-size: 14px; font-weight: 500; transition: all .15s;
+}
+.btn-cancel:hover { background: var(--border-light); }
+.btn-save {
+  flex: 2; padding: 10px;
+  background: linear-gradient(45deg, var(--grad1), var(--grad3), var(--grad5));
+  color: #fff; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-save:hover { opacity: .85; }
+
+/* ── SNS FEED ── */
+.feed-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+@media(max-width:720px){ .feed-layout { grid-template-columns: 1fr; } }
+
+.post-composer {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;
+}
+.composer-top { display: flex; gap: 12px; align-items: flex-start; }
+.composer-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(45deg, var(--grad1), var(--grad5));
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  overflow: hidden;
+}
+.composer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.composer-input {
+  flex: 1; border: none; outline: none; resize: none;
+  font-size: 14px; font-family: inherit; color: var(--text-primary);
+  background: transparent; min-height: 60px;
+  line-height: 1.5;
+}
+.composer-input::placeholder { color: var(--text-muted); }
+.composer-footer {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+.composer-action {
+  border: none; background: none; cursor: pointer;
+  font-size: 13px; color: var(--text-secondary);
+  padding: 6px 10px; border-radius: 6px;
+  display: flex; align-items: center; gap: 5px;
+  transition: all .15s;
+}
+.composer-action:hover { background: var(--border-light); color: var(--text-primary); }
+.composer-img-preview {
+  max-width: 100%; border-radius: 10px; margin-top: 10px; display: none;
+}
+
+.post-feed { display: flex; flex-direction: column; gap: 12px; }
+
+.post-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); overflow: hidden;
+  animation: fadeIn .3s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.post-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+}
+.post-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+}
+.post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.post-avatar-ph {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.post-meta { flex: 1; }
+.post-author { font-size: 13px; font-weight: 600; }
+.post-time { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+.post-more { border: none; background: none; cursor: pointer; color: var(--text-secondary); font-size: 18px; padding: 4px 8px; border-radius: 6px; }
+.post-more:hover { background: var(--border-light); }
+
+.post-img { width: 100%; display: block; max-height: 400px; object-fit: cover; }
+
+.post-body { padding: 12px 14px; }
+.post-text { font-size: 14px; line-height: 1.6; }
+.post-tag { color: var(--accent); font-weight: 500; }
+
+.post-actions {
+  display: flex; gap: 0;
+  padding: 4px 8px;
+  border-top: 1px solid var(--border-light);
+}
+.post-action-btn {
+  flex: 1; border: none; background: none; cursor: pointer;
+  padding: 8px; border-radius: 8px; font-size: 13px;
+  color: var(--text-secondary); display: flex; align-items: center;
+  justify-content: center; gap: 5px; transition: all .15s; font-family: inherit;
+}
+.post-action-btn:hover { background: var(--border-light); color: var(--text-primary); }
+.post-action-btn.liked { color: var(--danger); }
+
+.post-likes { padding: 0 14px 4px; font-size: 13px; font-weight: 600; }
+.post-week-tag {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  background: linear-gradient(45deg, var(--grad1), var(--grad5));
+  color: #fff; margin-left: 6px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;
+}
+.sidebar-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+
+.leaderboard-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border-light);
+}
+.leaderboard-item:last-child { border-bottom: none; }
+.rank { width: 20px; font-size: 13px; font-weight: 700; color: var(--text-muted); text-align: center; }
+.rank.gold { color: #f59e0b; }
+.rank.silver { color: #94a3b8; }
+.rank.bronze { color: #b45309; }
+.lb-name { flex: 1; font-size: 13px; font-weight: 500; }
+.lb-progress { font-size: 12px; font-weight: 600; color: var(--grad4); }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-item { text-align: center; padding: 10px; background: var(--border-light); border-radius: 8px; }
+.stat-num { font-size: 22px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.empty p { font-size: 13px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text-primary); color: #fff;
+  padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  z-index: 300; transition: transform .3s ease;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* post comment area */
+.post-comments { padding: 0 14px 10px; }
+.comment-form { display: flex; gap: 8px; margin-top: 6px; }
+.comment-input {
+  flex: 1; border: none; border-bottom: 1px solid var(--border);
+  outline: none; font-size: 13px; font-family: inherit;
+  padding: 4px 0; background: transparent; color: var(--text-primary);
+}
+.comment-input::placeholder { color: var(--text-muted); }
+.comment-submit {
+  border: none; background: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  padding: 4px 8px;
+}
+.comment-list { margin-top: 6px; }
+.comment-item { font-size: 13px; margin-top: 4px; line-height: 1.4; }
+.comment-item strong { font-weight: 600; margin-right: 6px; }
+
+/* image upload hidden */
+#hiddenFileInput, #postImageInput, #memberPhotoInput { display: none; }
+
+/* ── POST MENU DROPDOWN ── */
+.post-menu-wrap { position: relative; }
+.post-menu-dropdown {
+  display: none; position: absolute; right: 0; top: 100%;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+  min-width: 130px; z-index: 50; overflow: hidden;
+}
+.post-menu-dropdown.open { display: block; }
+.post-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-size: 13px; cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left;
+  color: var(--text-primary); font-family: inherit;
+  transition: background .12s;
+}
+.post-menu-item:hover { background: var(--border-light); }
+.post-menu-item.danger { color: var(--danger); }
+.post-menu-item.danger:hover { background: #fdecea; }
+
+/* ── EDIT POST MODAL ── */
+#editPostModal .modal { width: 420px; }
+.edit-img-preview { max-width: 100%; border-radius: 10px; margin-top: 8px; display: none; }
+.edit-img-remove {
+  font-size: 12px; color: var(--danger); cursor: pointer;
+  margin-top: 4px; display: none; border: none; background: none; font-family: inherit;
+}
+
+/* ── CURRICULUM PANEL ── */
+.curriculum-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); margin-bottom: 20px; overflow: hidden;
+}
+.curriculum-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+  cursor: pointer; user-select: none;
+}
+.curriculum-header-left { display: flex; align-items: center; gap: 10px; }
+.curriculum-header h3 { font-size: 15px; font-weight: 600; }
+.curriculum-header p { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.curriculum-toggle-icon { font-size: 13px; color: var(--text-secondary); transition: transform .25s; }
+.curriculum-toggle-icon.open { transform: rotate(180deg); }
+
+.curriculum-body { padding: 16px 18px; display: none; }
+.curriculum-body.open { display: block; }
+
+.week-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+@media(max-width:640px){ .week-grid { grid-template-columns: repeat(2,1fr); } }
+
+.week-topic-card {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px; cursor: pointer; transition: all .18s; position: relative;
+  min-height: 100px;
+}
+.week-topic-card:hover { border-color: var(--grad3); box-shadow: 0 2px 10px rgba(220,39,67,.1); }
+.week-topic-card.has-topic { border-color: var(--grad4); background: linear-gradient(135deg,#fff9ff,#fff); }
+.week-topic-card.active-week { border-color: #ffb300; background: linear-gradient(135deg,#fffde7,#fff8e1); }
+.week-topic-card.done-week { border-color: #a5d6a7; background: linear-gradient(135deg,#f1f8f1,#fff); }
+
+.wtc-week-num {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wtc-week-label { color: var(--text-muted); text-transform: uppercase; }
+.wtc-status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border);
+}
+.wtc-status-dot.active { background: #ffb300; }
+.wtc-status-dot.done { background: #66bb6a; }
+.wtc-status-dot.planned { background: var(--grad4); }
+
+.wtc-title {
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 4px; line-height: 1.3;
+}
+.wtc-title.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+
+.wtc-desc {
+  font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.wtc-edit-hint {
+  position: absolute; bottom: 8px; right: 8px;
+  font-size: 10px; color: var(--text-muted); opacity: 0;
+  transition: opacity .15s;
+}
+.week-topic-card:hover .wtc-edit-hint { opacity: 1; }
+
+/* curriculum modal */
+#curriculumModal .modal { width: 440px; }
+.phase-select-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.phase-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: none; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 500;
+  color: var(--text-secondary); transition: all .15s;
+}
+.phase-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+
+.week-topic-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; border: 1px solid var(--border);
+  color: var(--text-secondary); background: var(--border-light);
+  margin-bottom: 14px;
+}
+
+/* ── START DATE BANNER ── */
+.start-date-banner {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 18px;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.start-date-banner label { font-size: 13px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+.start-date-banner input[type="date"] {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 10px; font-size: 13px; font-family: inherit;
+  outline: none; color: var(--text-primary); background: var(--surface);
+  cursor: pointer; transition: border-color .15s;
+}
+.start-date-banner input[type="date"]:focus { border-color: var(--accent); }
+.start-date-info {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.start-date-chip {
+  background: var(--border-light); border-radius: 20px;
+  padding: 4px 12px; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+}
+.start-date-chip.current { background: linear-gradient(90deg,#fff3e0,#ffe0b2); color: #e65100; }
+
+/* ── REPORT VIEW ── */
+.report-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+@media(max-width:700px){ .report-layout { grid-template-columns: 1fr; } }
+
+.report-list-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); overflow: hidden;
+}
+.report-list-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.report-list-header h3 { font-size: 14px; font-weight: 600; }
+.btn-new-report {
+  background: linear-gradient(45deg,var(--grad1),var(--grad3),var(--grad5));
+  color: #fff; border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s;
+}
+.btn-new-report:hover { opacity: .85; }
+
+.report-list-items { max-height: 600px; overflow-y: auto; }
+.report-list-item {
+  padding: 12px 16px; border-bottom: 1px solid var(--border-light);
+  cursor: pointer; transition: background .15s;
+}
+.report-list-item:last-child { border-bottom: none; }
+.report-list-item:hover { background: var(--border-light); }
+.report-list-item.active { background: linear-gradient(90deg,#fff0f5,#ffeef8); border-left: 3px solid var(--grad4); }
+.rli-week { font-size: 11px; font-weight: 700; color: var(--grad4); margin-bottom: 2px; }
+.rli-date { font-size: 13px; font-weight: 500; }
+.rli-preview { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.report-empty-list {
+  padding: 40px 16px; text-align: center;
+  font-size: 13px; color: var(--text-secondary);
+}
+.report-empty-list div:first-child { font-size: 32px; margin-bottom: 8px; }
+
+/* Report detail / form */
+.report-detail {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); overflow: hidden;
+}
+.report-detail-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.report-detail-header h3 { font-size: 16px; font-weight: 600; flex: 1; }
+.report-week-pill {
+  background: linear-gradient(45deg,var(--grad1),var(--grad5));
+  color: #fff; border-radius: 20px; padding: 3px 12px;
+  font-size: 12px; font-weight: 700;
+}
+.btn-edit-report, .btn-delete-report {
+  border: 1px solid var(--border); background: none; border-radius: 6px;
+  padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.btn-edit-report:hover { background: var(--border-light); }
+.btn-delete-report { border-color: var(--danger); color: var(--danger); }
+.btn-delete-report:hover { background: #fdecea; }
+
+.report-body { padding: 20px; }
+.report-section { margin-bottom: 24px; }
+.report-section-title {
+  font-size: 13px; font-weight: 700; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.report-field-row {
+  display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.report-field-label { font-size: 12px; color: var(--text-secondary); min-width: 80px; padding-top: 1px; }
+.report-field-value { font-size: 13px; color: var(--text-primary); flex: 1; line-height: 1.6; }
+
+.attendee-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.attendee-chip {
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+.attendee-chip.present { background: #e8f5e9; color: #2e7d32; }
+.attendee-chip.absent { background: var(--border-light); color: var(--text-muted); text-decoration: line-through; }
+
+.expense-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.expense-table th { padding: 7px 10px; background: var(--border-light); font-weight: 600; text-align: left; font-size: 12px; color: var(--text-secondary); }
+.expense-table td { padding: 7px 10px; border-bottom: 1px solid var(--border-light); }
+.expense-table tr:last-child td { border-bottom: none; }
+.expense-total { font-weight: 700; color: var(--grad4); }
+
+.issue-item {
+  background: #fff9f9; border-left: 3px solid var(--danger);
+  border-radius: 0 6px 6px 0; padding: 8px 12px; margin-bottom: 6px;
+  font-size: 13px; line-height: 1.6;
+}
+
+/* Report form */
+.report-form { padding: 20px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+
+.attendee-check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 6px; }
+.attendee-check-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; transition: all .15s; font-size: 13px; user-select: none;
+}
+.attendee-check-item input[type="checkbox"] { cursor: pointer; accent-color: var(--grad4); }
+.attendee-check-item:has(input:checked) { border-color: var(--grad4); background: #fff0f8; }
+
+.expense-entry { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.expense-entry input { flex: 1; }
+.expense-entry input.amount { max-width: 110px; }
+.btn-rm { border: 1px solid var(--border); background: none; border-radius: 6px; padding: 6px 9px; cursor: pointer; font-size: 12px; color: var(--text-secondary); transition: all .15s; }
+.btn-rm:hover { background: #fdecea; color: var(--danger); border-color: var(--danger); }
+.btn-add-row { border: 1px dashed var(--border); background: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 12px; color: var(--text-secondary); width: 100%; margin-top: 4px; transition: all .15s; font-family: inherit; }
+.btn-add-row:hover { border-color: var(--accent); color: var(--accent); }
+
+.textarea-report {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-family: inherit; resize: vertical;
+  min-height: 80px; outline: none; background: var(--surface);
+  color: var(--text-primary); transition: border-color .15s; line-height: 1.6;
+}
+.textarea-report:focus { border-color: var(--accent); }
+.report-form-actions { display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border-light); margin-top: 16px; }
+.report-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 20px; text-align: center; color: var(--text-secondary);
+}
+.report-placeholder div:first-child { font-size: 48px; margin-bottom: 12px; }
+.report-placeholder h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.report-placeholder p { font-size: 13px; }
+/* ── LOCK SCREEN ── */
+#lockScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  transition: opacity .4s ease;
+}
+#lockScreen.fade-out { opacity: 0; pointer-events: none; }
+
+.lock-card {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  padding: 44px 40px 36px;
+  width: 360px; max-width: 92vw;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  animation: lockFadeUp .5s ease;
+}
+@keyframes lockFadeUp {
+  from { opacity:0; transform: translateY(28px); }
+  to   { opacity:1; transform: none; }
+}
+
+.lock-icon {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: linear-gradient(135deg, #f09433, #dc2743, #bc1888);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; margin: 0 auto 20px;
+  box-shadow: 0 8px 24px rgba(188,24,136,.4);
+}
+.lock-title {
+  font-size: 20px; font-weight: 700; color: #fff;
+  margin-bottom: 4px; letter-spacing: -.3px;
+}
+.lock-subtitle {
+  font-size: 13px; color: rgba(255,255,255,.5);
+  margin-bottom: 28px; line-height: 1.5;
+}
+
+.lock-input-wrap {
+  position: relative; margin-bottom: 14px;
+}
+.lock-input {
+  width: 100%; padding: 13px 44px 13px 16px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 12px; background: rgba(255,255,255,.07);
+  color: #fff; font-size: 15px; font-family: inherit;
+  outline: none; letter-spacing: .08em;
+  transition: border-color .2s, background .2s;
+  box-sizing: border-box;
+}
+.lock-input::placeholder { color: rgba(255,255,255,.3); letter-spacing: 0; }
+.lock-input:focus { border-color: rgba(240,148,51,.7); background: rgba(255,255,255,.1); }
+.lock-input.error { border-color: #ed4956; animation: shake .35s ease; }
+@keyframes shake {
+  0%,100%{ transform:translateX(0); }
+  20%    { transform:translateX(-6px); }
+  40%    { transform:translateX(6px); }
+  60%    { transform:translateX(-4px); }
+  80%    { transform:translateX(4px); }
+}
+
+.lock-eye {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,.4); font-size: 16px; padding: 4px;
+  transition: color .15s;
+}
+.lock-eye:hover { color: rgba(255,255,255,.8); }
+
+.lock-btn {
+  width: 100%; padding: 13px;
+  background: linear-gradient(90deg, #f09433, #dc2743, #bc1888);
+  border: none; border-radius: 12px;
+  color: #fff; font-size: 15px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .02em;
+}
+.lock-btn:hover { opacity: .88; }
+.lock-btn:active { transform: scale(.98); }
+
+.lock-error-msg {
+  font-size: 12px; color: #ed4956; margin-top: 10px;
+  min-height: 16px; transition: opacity .2s;
+}
+
+.lock-footer {
+  margin-top: 28px; font-size: 11px; color: rgba(255,255,255,.25);
+}
+/* ── CONFIRM MODAL ── */
+#confirmModal {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+}
+#confirmModal.open { display: flex; }
+.confirm-box {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 28px 28px 22px; width: 320px; max-width: 90vw;
+  text-align: center; animation: fadeUp .2s ease;
+  box-shadow: var(--shadow-md);
+}
+.confirm-icon { font-size: 36px; margin-bottom: 12px; }
+.confirm-msg { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.confirm-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-cancel {
+  flex: 1; padding: 10px; border: 1px solid var(--border);
+  border-radius: 10px; background: none; cursor: pointer;
+  font-size: 14px; font-weight: 500; font-family: inherit;
+  transition: background .15s;
+}
+.confirm-cancel:hover { background: var(--border-light); }
+.confirm-ok {
+  flex: 1; padding: 10px; border: none; border-radius: 10px;
+  background: var(--danger); color: #fff;
+  cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit;
+  transition: opacity .15s;
+}
+.confirm-ok:hover { opacity: .85; }
+</style>
+</head>
+<body>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">🗑️</div>
+    <div class="confirm-msg" id="confirmMsg">정말 삭제하시겠습니까?</div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="confirmCancelBtn">취소</button>
+      <button class="confirm-ok" id="confirmOkBtn">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🏭</div>
+    <div class="lock-title">AI 생산·업무 자동화</div>
+    <div class="lock-subtitle">생산1팀 학습조직 전용 페이지입니다.<br>비밀번호를 입력해주세요.</div>
+    <div class="lock-input-wrap">
+      <input class="lock-input" type="password" id="lockInput"
+        placeholder="비밀번호 입력"
+        onkeydown="if(event.key==='Enter')tryUnlock()"
+        oninput="clearLockError()">
+      <button class="lock-eye" id="lockEye" onclick="toggleLockEye()" title="비밀번호 표시/숨기기">👁</button>
+    </div>
+    <button class="lock-btn" onclick="tryUnlock()">입장하기</button>
+    <div class="lock-error-msg" id="lockErrorMsg"></div>
+    <div class="lock-footer">생산1팀 학습조직 · AI를 통한 생산 공정/업무 자동화</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo" style="font-size:15px;letter-spacing:-0.3px;">🏭 AI 생산·업무 자동화</span>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('dashboard')">대시보드</button>
+    <button class="nav-tab" onclick="showView('feed')">피드</button>
+    <button class="nav-tab" onclick="showView('report')">활동보고서</button>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-add" onclick="openAddModal()">+ 멤버 추가</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="dash-header">
+      <h2>학습 진도 현황</h2>
+      <p>생산1팀 학습조직 · 8주 과정 · Claude Code 기반</p>
+    </div>
+
+    <!-- 학습 시작일 설정 -->
+    <div class="start-date-banner">
+      <label>📅 학습 시작일</label>
+      <input type="date" id="startDateInput" onchange="onStartDateChange()">
+      <div class="start-date-info" id="startDateInfo"></div>
+    </div>
+
+    <!-- 주차별 학습주제 패널 -->
+    <div class="curriculum-panel">
+      <div class="curriculum-header" onclick="toggleCurriculum()">
+        <div class="curriculum-header-left">
+          <div>
+            <h3>📚 주차별 학습주제</h3>
+            <p>각 주차를 클릭하여 학습주제를 등록·수정할 수 있습니다</p>
+          </div>
+        </div>
+        <span class="curriculum-toggle-icon open" id="curriculumToggleIcon">▾</span>
+      </div>
+      <div class="curriculum-body open" id="curriculumBody">
+        <div class="week-grid" id="weekTopicGrid"></div>
+      </div>
+    </div>
+    <div class="member-grid" id="memberGrid"></div>
+    <div class="empty" id="emptyDash" style="display:none">
+      <div class="empty-icon">👥</div>
+      <h3>아직 멤버가 없습니다</h3>
+      <p>상단의 "멤버 추가" 버튼으로 학습조직원을 추가해보세요.</p>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="view" id="view-feed">
+    <div class="feed-layout">
+      <div>
+        <!-- Composer -->
+        <div class="post-composer">
+          <div class="composer-top">
+            <div class="composer-avatar" id="composerAvatar">나</div>
+            <textarea class="composer-input" id="postText" placeholder="학습 내용, 인사이트, 질문을 공유해보세요..."></textarea>
+          </div>
+          <img class="composer-img-preview" id="composerImgPreview">
+          <div class="composer-footer">
+            <button class="composer-action" onclick="document.getElementById('postImageInput').click()">📷 사진</button>
+            <select id="postWeekTag" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text-secondary);cursor:pointer;outline:none;">
+              <option value="">주차 태그</option>
+              <option value="1주차">1주차</option><option value="2주차">2주차</option>
+              <option value="3주차">3주차</option><option value="4주차">4주차</option>
+              <option value="5주차">5주차</option><option value="6주차">6주차</option>
+              <option value="7주차">7주차</option><option value="8주차">8주차</option>
+            </select>
+            <select id="postAuthorSelect" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text-secondary);cursor:pointer;outline:none;">
+              <option value="">작성자 선택</option>
+            </select>
+            <button class="btn-add" style="margin-left:auto;padding:7px 16px;font-size:13px" onclick="submitPost()">공유</button>
+          </div>
+          <input type="file" id="postImageInput" accept="image/*" onchange="previewPostImage(event)">
+        </div>
+        <!-- Feed -->
+        <div class="post-feed" id="postFeed"></div>
+        <div class="empty" id="emptyFeed">
+          <div class="empty-icon">✍️</div>
+          <h3>아직 게시글이 없습니다</h3>
+          <p>학습 내용을 첫 번째로 공유해보세요!</p>
+        </div>
+      </div>
+      <!-- Sidebar -->
+      <div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">📚 이번 주 학습주제</div>
+          <div id="sidebarCurriculum" style="font-size:13px;color:var(--text-secondary)">주제를 등록해주세요.</div>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">🏆 학습 리더보드</div>
+          <div id="leaderboard"></div>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">📊 전체 통계</div>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-item"><div class="stat-num" id="statMembers">0</div><div class="stat-label">학습 인원</div></div>
+            <div class="stat-item"><div class="stat-num" id="statPosts">0</div><div class="stat-label">게시글</div></div>
+            <div class="stat-item"><div class="stat-num" id="statAvgWeek">0</div><div class="stat-label">평균 주차</div></div>
+            <div class="stat-item"><div class="stat-num" id="statComplete">0</div><div class="stat-label">완료 인원</div></div>
+          </div>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">📅 이번 주 태그 활동</div>
+          <div id="weekTagStats" style="font-size:13px;color:var(--text-secondary)">게시글을 작성하면 집계됩니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="view" id="view-report">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:600;">활동보고서</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin-top:2px;">주차별 오프라인 모임 활동을 기록합니다</p>
+      </div>
+    </div>
+    <div class="report-layout">
+      <!-- Left: list -->
+      <div class="report-list-panel">
+        <div class="report-list-header">
+          <h3>보고서 목록</h3>
+          <button class="btn-new-report" onclick="openReportForm(null)">+ 새 보고서</button>
+        </div>
+        <div class="report-list-items" id="reportListItems">
+          <div class="report-empty-list"><div>📋</div>보고서가 없습니다</div>
+        </div>
+      </div>
+      <!-- Right: detail / form -->
+      <div id="reportRightPanel">
+        <div class="report-detail">
+          <div class="report-placeholder">
+            <div>📝</div>
+            <h3>보고서를 선택하거나 새로 작성하세요</h3>
+            <p>왼쪽 목록에서 보고서를 선택하거나<br>"+ 새 보고서" 버튼을 눌러 작성하세요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <h3>멤버 추가</h3>
+    <div class="form-group">
+      <label>이름</label>
+      <input type="text" id="inputName" placeholder="이름을 입력하세요">
+    </div>
+    <div class="form-group">
+      <label>직책 / 역할</label>
+      <input type="text" id="inputRole" placeholder="예: 개발팀, 품질관리팀">
+    </div>
+    <div class="form-group">
+      <label>프로필 사진</label>
+      <div class="photo-upload" onclick="document.getElementById('memberPhotoInput').click()">
+        <img class="photo-upload-preview" id="photoPreview" style="display:none">
+        <div id="photoUploadText">
+          <div style="font-size:28px;margin-bottom:6px">📷</div>
+          <div style="font-size:13px;color:var(--text-secondary)">클릭하여 사진 업로드</div>
+        </div>
+      </div>
+      <input type="file" id="memberPhotoInput" accept="image/*" onchange="previewMemberPhoto(event)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('addModal')">취소</button>
+      <button class="btn-save" onclick="addMember()">추가하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT POST MODAL -->
+<div class="modal-bg" id="editPostModal">
+  <div class="modal">
+    <h3>게시글 수정</h3>
+    <div class="form-group">
+      <label>내용</label>
+      <textarea id="editPostText" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;min-height:100px;outline:none;transition:border-color .15s;background:var(--surface);color:var(--text-primary);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div class="form-group">
+      <label>주차 태그</label>
+      <select id="editPostWeekTag" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);">
+        <option value="">태그 없음</option>
+        <option value="1주차">1주차</option><option value="2주차">2주차</option>
+        <option value="3주차">3주차</option><option value="4주차">4주차</option>
+        <option value="5주차">5주차</option><option value="6주차">6주차</option>
+        <option value="7주차">7주차</option><option value="8주차">8주차</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>사진</label>
+      <img id="editImgPreview" class="edit-img-preview">
+      <button class="edit-img-remove" id="editImgRemoveBtn" onclick="removeEditImage()">✕ 사진 삭제</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-cancel" style="flex:1;font-size:12px;padding:7px" onclick="document.getElementById('editImageInput').click()">📷 사진 변경</button>
+      </div>
+      <input type="file" id="editImageInput" accept="image/*" style="display:none" onchange="previewEditImage(event)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editPostModal')">취소</button>
+      <button class="btn-save" onclick="saveEditPost()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- CURRICULUM WEEK MODAL -->
+<div class="modal-bg" id="curriculumModal">
+  <div class="modal">
+    <div class="week-topic-badge" id="currModalWeekBadge">📅 1주차</div>
+    <h3 id="currModalTitle">학습주제 등록</h3>
+    <div class="form-group">
+      <label>학습주제 (제목)</label>
+      <input type="text" id="currInputTitle" placeholder="예: AI & 클로드 코드 기초 이해">
+    </div>
+    <div class="form-group">
+      <label>학습 내용 설명</label>
+      <textarea id="currInputDesc" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;min-height:80px;outline:none;transition:border-color .15s;background:var(--surface);color:var(--text-primary);" placeholder="이번 주에 다룰 내용을 간략히 적어주세요" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div class="form-group">
+      <label>진행 상태</label>
+      <div class="phase-select-row" id="statusBtnRow">
+        <button class="phase-btn selected" data-status="planned" onclick="selectStatus(this)">📋 예정</button>
+        <button class="phase-btn" data-status="active" onclick="selectStatus(this)">🔥 진행중</button>
+        <button class="phase-btn" data-status="done" onclick="selectStatus(this)">✅ 완료</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('curriculumModal')">취소</button>
+      <button class="btn-save" onclick="saveCurriculumWeek()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<input type="file" id="hiddenFileInput" accept="image/*">
+
+<script>
+// ── LOCK SCREEN ──
+const LOCK_PW = 'claude';
+const SESSION_KEY = 'rl_unlocked';
+
+function tryUnlock() {
+  const val = document.getElementById('lockInput').value;
+  if (val === LOCK_PW) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    const ls = document.getElementById('lockScreen');
+    ls.classList.add('fade-out');
+    setTimeout(() => { ls.style.display = 'none'; }, 420);
+  } else {
+    const input = document.getElementById('lockInput');
+    const msg = document.getElementById('lockErrorMsg');
+    input.classList.add('error');
+    input.value = '';
+    msg.textContent = '비밀번호가 올바르지 않습니다. 다시 입력해주세요.';
+    setTimeout(() => input.classList.remove('error'), 400);
+    input.focus();
+  }
+}
+
+function clearLockError() {
+  document.getElementById('lockErrorMsg').textContent = '';
+}
+
+function toggleLockEye() {
+  const input = document.getElementById('lockInput');
+  const eye = document.getElementById('lockEye');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eye.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    eye.textContent = '👁';
+  }
+}
+
+// Check session — if already unlocked this session, skip lock screen
+(function() {
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    const ls = document.getElementById('lockScreen');
+    ls.style.display = 'none';
+  } else {
+    // Focus input after a short delay for animation
+    setTimeout(() => {
+      const inp = document.getElementById('lockInput');
+      if (inp) inp.focus();
+    }, 300);
+  }
+})();
+
+// ── CUSTOM CONFIRM ──
+function showConfirm({ icon = '🗑️', msg, sub = '', okLabel = '삭제', onOk }) {
+  document.getElementById('confirmIcon').textContent = icon;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmSub').textContent = sub;
+  document.getElementById('confirmOkBtn').textContent = okLabel;
+  const modal = document.getElementById('confirmModal');
+  modal.classList.add('open');
+  const ok = document.getElementById('confirmOkBtn');
+  const cancel = document.getElementById('confirmCancelBtn');
+  const close = () => modal.classList.remove('open');
+  ok.onclick = () => { close(); onOk(); };
+  cancel.onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+}
+
+// ── FIREBASE DB 참조 — Firebase 초기화 후 할당됨 ──
+const ROOT = 'sangsam1';
+let db = null; // Firebase 초기화 후 아래 마지막 <script>에서 할당
+
+// ── STATE ──
+let members    = [];
+let posts      = [];
+let curriculum = {};
+let reports    = [];
+let startDate  = '';
+let memberPhotoData = null;
+let postImageData   = null;
+let editingId       = null;
+let _listeners      = {};
+
+// ── 연결 상태 표시 ──
+function showSyncStatus(status) {
+  let el = document.getElementById('syncStatus');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'syncStatus';
+    el.style.cssText = 'position:fixed;bottom:70px;right:16px;z-index:9000;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;transition:all .3s;';
+    document.body.appendChild(el);
+  }
+  if (status === 'online') {
+    el.style.display = 'block'; el.style.opacity = '1';
+    el.textContent = '🟢 실시간 연결됨';
+    el.style.background = '#e8f5e9'; el.style.color = '#2e7d32';
+    setTimeout(() => { el.style.opacity = '0'; }, 3000);
+    setTimeout(() => { el.style.opacity = '1'; el.style.display = 'none'; }, 3300);
+  } else if (status === 'saving') {
+    el.style.display = 'block'; el.style.opacity = '1';
+    el.textContent = '💾 저장 중...';
+    el.style.background = '#fff3e0'; el.style.color = '#e65100';
+  } else if (status === 'saved') {
+    el.style.display = 'block'; el.style.opacity = '1';
+    el.textContent = '✅ 저장됨';
+    el.style.background = '#e8f5e9'; el.style.color = '#2e7d32';
+    setTimeout(() => { el.style.opacity = '0'; }, 1500);
+    setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 1800);
+  } else if (status === 'offline') {
+    el.style.display = 'block'; el.style.opacity = '1';
+    el.textContent = '🔴 오프라인';
+    el.style.background = '#fdecea'; el.style.color = '#c62828';
+  }
+}
+
+// ── FIREBASE SAVE ──
+async function save() {
+  if (!db) return;
+  showSyncStatus('saving');
+  try {
+    await db.ref(ROOT + '/members').set(members);
+    await db.ref(ROOT + '/posts').set(posts);
+    showSyncStatus('saved');
+  } catch(e) { console.error('save error', e); showToast('저장 오류: ' + e.message); }
+}
+async function saveCurriculum() {
+  if (!db) return;
+  showSyncStatus('saving');
+  try { await db.ref(ROOT + '/curriculum').set(curriculum); showSyncStatus('saved'); }
+  catch(e) { console.error(e); }
+}
+async function saveReports() {
+  if (!db) return;
+  showSyncStatus('saving');
+  try { await db.ref(ROOT + '/reports').set(reports); showSyncStatus('saved'); }
+  catch(e) { console.error(e); }
+}
+async function saveStartDate() {
+  if (!db) return;
+  try { await db.ref(ROOT + '/startDate').set(startDate); } catch(e) { console.error(e); }
+}
+
+// ── FIREBASE 실시간 리스너 ──
+function attachListeners() {
+  if (!db) return;
+  // 연결 상태
+  db.ref('.info/connected').on('value', snap => {
+    showSyncStatus(snap.val() ? 'online' : 'offline');
+  });
+  // members
+  db.ref(ROOT + '/members').on('value', snap => {
+    const val = snap.val();
+    members = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+    renderDashboard(); updateAuthorSelect(); renderSidebar(); updateComposerAvatar();
+  });
+  // posts
+  db.ref(ROOT + '/posts').on('value', snap => {
+    const val = snap.val();
+    posts = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+    renderFeed(); renderSidebar();
+  });
+  // curriculum
+  db.ref(ROOT + '/curriculum').on('value', snap => {
+    curriculum = snap.val() || {};
+    renderCurriculum(); renderSidebar();
+  });
+  // reports
+  db.ref(ROOT + '/reports').on('value', snap => {
+    const val = snap.val();
+    reports = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+    renderReportList();
+  });
+  // startDate
+  db.ref(ROOT + '/startDate').on('value', snap => {
+    const val = snap.val();
+    if (val !== null && val !== undefined) {
+      startDate = val;
+      const input = document.getElementById('startDateInput');
+      if (input && input.value !== startDate) input.value = startDate;
+      updateStartDateInfo();
+    }
+  });
+}
+
+// ── 로딩 오버레이 ──
+function showLoading(msg) {
+  let el = document.getElementById('fbLoading');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'fbLoading';
+    el.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(250,250,250,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(6px);';
+    el.innerHTML = '<div style="width:48px;height:48px;border:4px solid #f0f0f0;border-top-color:#dc2743;border-radius:50%;animation:fbspin .8s linear infinite"></div><span id="fbLoadingMsg" style="font-size:14px;color:#666;font-weight:500;">불러오는 중...</span><style>@keyframes fbspin{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(el);
+  }
+  el.querySelector('#fbLoadingMsg').textContent = msg || '불러오는 중...';
+  el.style.display = 'flex';
+}
+function hideLoading() {
+  const el = document.getElementById('fbLoading');
+  if (el) el.style.display = 'none';
+}
+
+// ── INIT — Firebase 초기화 후 마지막 <script>에서 호출됨 ──
+async function appInit() {
+  showLoading('Firebase 연결 중...');
+  try {
+    const snap = await db.ref(ROOT).once('value');
+    const data = snap.val() || {};
+    const toArr = v => !v ? [] : Array.isArray(v) ? v : Object.values(v);
+    members    = toArr(data.members);
+    posts      = toArr(data.posts);
+    curriculum = data.curriculum || {};
+    reports    = toArr(data.reports);
+    startDate  = data.startDate  || '';
+  } catch(e) {
+    console.warn('Firebase 로드 실패, 로컬 폴백:', e);
+    members    = JSON.parse(localStorage.getItem('rl_members')    || '[]');
+    posts      = JSON.parse(localStorage.getItem('rl_posts')      || '[]');
+    curriculum = JSON.parse(localStorage.getItem('rl_curriculum') || '{}');
+    reports    = JSON.parse(localStorage.getItem('rl_reports')    || '[]');
+    startDate  = localStorage.getItem('rl_startDate') || '';
+  }
+  hideLoading();
+  initStartDate();
+  renderCurriculum();
+  renderDashboard();
+  renderFeed();
+  renderSidebar();
+  updateComposerAvatar();
+  renderReportList();
+  attachListeners();
+}
+
+// ── NAV ──
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'feed') { renderFeed(); renderSidebar(); updateComposerAvatar(); }
+  if (id === 'report') { renderReportList(); }
+}
+
+// ── START DATE ──
+function initStartDate() {
+  const input = document.getElementById('startDateInput');
+  if (startDate) { input.value = startDate; }
+  updateStartDateInfo();
+}
+
+function onStartDateChange() {
+  startDate = document.getElementById('startDateInput').value;
+  saveStartDate();
+  updateStartDateInfo();
+  autoUpdateMemberWeeks();
+  renderDashboard();
+  renderCurriculum();
+}
+
+function calcCurrentWeek() {
+  if (!startDate) return null;
+  const start = new Date(startDate);
+  const now = new Date();
+  const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return null; // not started
+  const week = Math.floor(diffDays / 7) + 1;
+  return Math.min(week, 8);
+}
+
+function getWeekDateRange(weekNum) {
+  if (!startDate) return '';
+  const start = new Date(startDate);
+  const wStart = new Date(start);
+  wStart.setDate(start.getDate() + (weekNum - 1) * 7);
+  const wEnd = new Date(wStart);
+  wEnd.setDate(wStart.getDate() + 6);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return fmt(wStart) + '~' + fmt(wEnd);
+}
+
+function updateStartDateInfo() {
+  const info = document.getElementById('startDateInfo');
+  if (!info) return;
+  if (!startDate) { info.innerHTML = '<span class="start-date-chip">시작일을 선택하면 주차가 자동 계산됩니다</span>'; return; }
+  const curWeek = calcCurrentWeek();
+  const start = new Date(startDate);
+  const end = new Date(start); end.setDate(start.getDate() + 55);
+  const fmtDate = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  const chips = [];
+  chips.push(`<span class="start-date-chip">종료 예정: ${fmtDate(end)}</span>`);
+  if (curWeek === null) {
+    chips.push('<span class="start-date-chip">⏳ 아직 시작 전</span>');
+  } else {
+    chips.push(`<span class="start-date-chip current">🔥 현재: ${curWeek}주차 (${getWeekDateRange(curWeek)})</span>`);
+  }
+  info.innerHTML = chips.join('');
+}
+
+function autoUpdateMemberWeeks() {
+  const curWeek = calcCurrentWeek();
+  if (curWeek === null) return;
+  members.forEach(m => {
+    if (m.weekAuto !== false) { // only auto-update if not manually overridden
+      m.week = curWeek;
+    }
+  });
+  save();
+}
+
+// ── CURRICULUM ──
+function toggleCurriculum() {
+  const body = document.getElementById('curriculumBody');
+  const icon = document.getElementById('curriculumToggleIcon');
+  body.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+
+let editingWeekNum = null;
+
+function renderCurriculum() {
+  const grid = document.getElementById('weekTopicGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  // compute current dominant week across members
+  const currentWeeks = members.map(m => m.week);
+  const avgW = currentWeeks.length ? Math.round(currentWeeks.reduce((a,b)=>a+b,0)/currentWeeks.length) : 0;
+  for (let w = 1; w <= 8; w++) {
+    const topic = curriculum[w] || {};
+    const hasData = !!topic.title;
+    const status = topic.status || '';
+    let cardClass = 'week-topic-card';
+    if (hasData) cardClass += ' has-topic';
+    if (status === 'active') cardClass = 'week-topic-card active-week';
+    if (status === 'done') cardClass = 'week-topic-card done-week';
+    const dotClass = status === 'active' ? 'active' : status === 'done' ? 'done' : hasData ? 'planned' : '';
+    const statusLabel = status === 'active' ? '🔥 진행중' : status === 'done' ? '✅ 완료' : hasData ? '📋 예정' : '';
+    const card = document.createElement('div');
+    card.className = cardClass;
+    const dateRange = getWeekDateRange(w);
+    card.innerHTML = `
+      <div class="wtc-week-num">
+        <span class="wtc-week-label">${w}주차${dateRange ? ' <span style="font-weight:400;color:var(--text-muted)">('+dateRange+')</span>' : ''}</span>
+        <span class="wtc-status-dot ${dotClass}"></span>
+      </div>
+      <div class="wtc-title ${hasData ? '' : 'empty'}">${hasData ? escCurr(topic.title) : '주제 미등록'}</div>
+      ${topic.desc ? `<div class="wtc-desc">${escCurr(topic.desc)}</div>` : ''}
+      ${statusLabel ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:6px;">${statusLabel}</div>` : ''}
+      <div class="wtc-edit-hint">✏️ 클릭하여 편집</div>`;
+    card.onclick = () => openCurriculumModal(w);
+    grid.appendChild(card);
+  }
+}
+
+function escCurr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openCurriculumModal(weekNum) {
+  editingWeekNum = weekNum;
+  const topic = curriculum[weekNum] || {};
+  document.getElementById('currModalWeekBadge').textContent = '📅 ' + weekNum + '주차';
+  document.getElementById('currModalTitle').textContent = (topic.title ? '학습주제 수정' : '학습주제 등록') + ' — ' + weekNum + '주차';
+  document.getElementById('currInputTitle').value = topic.title || '';
+  document.getElementById('currInputDesc').value = topic.desc || '';
+  // reset status buttons
+  document.querySelectorAll('#statusBtnRow .phase-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.status === (topic.status || 'planned'));
+  });
+  document.getElementById('curriculumModal').classList.add('open');
+}
+
+function selectStatus(btn) {
+  document.querySelectorAll('#statusBtnRow .phase-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveCurriculumWeek() {
+  const title = document.getElementById('currInputTitle').value.trim();
+  const desc = document.getElementById('currInputDesc').value.trim();
+  const statusBtn = document.querySelector('#statusBtnRow .phase-btn.selected');
+  const status = statusBtn ? statusBtn.dataset.status : 'planned';
+  if (!title) { showToast('학습주제 제목을 입력해주세요'); return; }
+  curriculum[editingWeekNum] = { title, desc, status };
+  saveCurriculum();
+  closeModal('curriculumModal');
+  renderCurriculum();
+  renderSidebar();
+  showToast(editingWeekNum + '주차 학습주제가 저장됐습니다!');
+}
+
+// Also expose week topics in member progress tooltip
+function getWeekTopicLabel(weekNum) {
+  const t = curriculum[weekNum];
+  return t && t.title ? t.title : '';
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const grid = document.getElementById('memberGrid');
+  const empty = document.getElementById('emptyDash');
+  grid.innerHTML = '';
+  if (members.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  members.forEach(m => {
+    const card = createMemberCard(m);
+    grid.appendChild(card);
+  });
+}
+
+function createMemberCard(m) {
+  const div = document.createElement('div');
+  div.className = 'member-card';
+  div.id = 'card-' + m.id;
+  const initials = m.name.slice(0,2);
+  const avatarHtml = m.photo
+    ? `<img src="${m.photo}" class="avatar" title="사진 변경">`
+    : `<div class="avatar-placeholder" title="사진 추가">${initials}</div>`;
+  const weekDone = m.week >= 8;
+
+  div.innerHTML = `
+    <div class="member-card-top">
+      <div class="avatar-wrap">
+        <div class="avatar-ring"><div class="avatar-ring-inner">${avatarHtml}</div></div>
+      </div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-role">${m.role || '학습조직원'}</div>
+      </div>
+      <span class="member-week-badge ${weekDone?'done':''}">${weekDone?'🎉 완료':'0주차'}</span>
+      <div class="member-card-actions">
+        <button class="btn-icon danger" data-delete-id="${m.id}" title="삭제">✕</button>
+      </div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>학습 진도</span>
+        <strong>${m.week} / 8주</strong>
+      </div>
+      <div class="progress-track" id="track-${m.id}">
+        <div class="progress-weeks" id="weeks-${m.id}"></div>
+      </div>
+      <div class="week-labels" id="wlabels-${m.id}"></div>
+      <div class="week-ctrl">
+        <span>${m.week < 8 ? (m.week+1)+'주차 시작 준비 중' : '🎉 전 과정 완료!'}</span>
+        <button class="week-btn" data-week-id="${m.id}" data-delta="-1" ${m.week<=0?'disabled':''}>−</button>
+        <button class="week-btn" data-week-id="${m.id}" data-delta="1" ${m.week>=8?'disabled':''}>+</button>
+      </div>
+      <div class="week-topic-hint" id="wtHint-${m.id}"></div>
+    </div>`;
+
+  // fix week badge text
+  div.querySelector('.member-week-badge').textContent = weekDone ? '🎉 완료' : m.week + '주차';
+
+  // avatar click → photo change
+  const avatarEl = div.querySelector('.avatar, .avatar-placeholder');
+  if (avatarEl) avatarEl.addEventListener('click', (e) => { e.stopPropagation(); openPhotoChange(m.id); });
+
+  // delete button
+  const delBtn = div.querySelector('[data-delete-id]');
+  if (delBtn) delBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteMember(m.id); });
+
+  // week +/- buttons
+  div.querySelectorAll('[data-week-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      changeWeek(btn.dataset.weekId, parseInt(btn.dataset.delta));
+    });
+  });
+
+  renderProgressBar(m, div);
+
+  // show current week topic
+  const hint = div.querySelector('#wtHint-' + m.id);
+  if (hint) {
+    const t = m.week > 0 ? getWeekTopicLabel(m.week) : '';
+    hint.textContent = t ? '📖 ' + t : '';
+  }
+  return div;
+}
+
+function renderProgressBar(m, container) {
+  const weeksEl = container.querySelector('#weeks-' + m.id);
+  const labelsEl = container.querySelector('#wlabels-' + m.id);
+  const track = container.querySelector('#track-' + m.id);
+  weeksEl.innerHTML = '';
+  labelsEl.innerHTML = '';
+
+  for (let i = 1; i <= 8; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'week-seg ' + (i < m.week ? 'done' : i === m.week && m.week > 0 ? 'current' : 'empty');
+    const topicTitle = getWeekTopicLabel(i);
+    if (topicTitle) seg.title = i + '주차: ' + topicTitle;
+    weeksEl.appendChild(seg);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'week-label' + (i <= m.week ? ' done' : '');
+    lbl.textContent = i + 'W';
+    if (topicTitle) lbl.title = topicTitle;
+    labelsEl.appendChild(lbl);
+  }
+
+  // Avatar position on bar
+  const existing = track.querySelector('.bar-avatar, .bar-avatar-placeholder');
+  if (existing) existing.remove();
+
+  if (m.week > 0) {
+    const pct = ((m.week - 0.5) / 8) * 100;
+    if (m.photo) {
+      const img = document.createElement('img');
+      img.className = 'bar-avatar';
+      img.src = m.photo;
+      img.style.left = pct + '%';
+      track.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'bar-avatar-placeholder';
+      ph.style.left = pct + '%';
+      ph.textContent = m.name.slice(0,2);
+      track.appendChild(ph);
+    }
+  }
+}
+
+function changeWeek(id, delta) {
+  const m = members.find(x => x.id === String(id));
+  if (!m) return;
+  m.week = Math.max(0, Math.min(8, m.week + parseInt(delta)));
+  save();
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    const badge = card.querySelector('.member-week-badge');
+    badge.textContent = m.week >= 8 ? '🎉 완료' : m.week + '주차';
+    badge.className = 'member-week-badge' + (m.week >= 8 ? ' done' : '');
+    const ctrl = card.querySelector('.week-ctrl span');
+    ctrl.textContent = m.week < 8 ? (m.week+1)+'주차 시작 준비 중' : '🎉 전 과정 완료!';
+    card.querySelectorAll('[data-week-id]').forEach(btn => {
+      const d = parseInt(btn.dataset.delta);
+      btn.disabled = (d < 0 && m.week <= 0) || (d > 0 && m.week >= 8);
+    });
+    renderProgressBar(m, card);
+    const hint = card.querySelector('#wtHint-' + id);
+    if (hint) {
+      const t = m.week > 0 ? getWeekTopicLabel(m.week) : '';
+      hint.textContent = t ? '📖 ' + t : '';
+    }
+  }
+  renderSidebar();
+  showToast(m.name + ' 진도가 ' + m.week + '주차로 업데이트됐습니다!');
+}
+
+// ── ADD MEMBER ──
+function openAddModal() {
+  memberPhotoData = null;
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputRole').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoUploadText').style.display = 'block';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function previewMemberPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    memberPhotoData = ev.target.result;
+    const preview = document.getElementById('photoPreview');
+    preview.src = memberPhotoData;
+    preview.style.display = 'block';
+    document.getElementById('photoUploadText').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function addMember() {
+  const name = document.getElementById('inputName').value.trim();
+  const role = document.getElementById('inputRole').value.trim();
+  if (!name) { showToast('이름을 입력해주세요'); return; }
+  const m = { id: Date.now().toString(), name, role, week: 0, photo: memberPhotoData || null };
+  members.push(m);
+  save();
+  closeModal('addModal');
+  renderDashboard();
+  updateAuthorSelect();
+  renderSidebar();
+  showToast(name + ' 님이 추가됐습니다!');
+}
+
+function deleteMember(id) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  showConfirm({
+    icon: '👤',
+    msg: m.name + ' 님을 삭제하시겠습니까?',
+    sub: '삭제한 멤버는 복구할 수 없습니다.',
+    okLabel: '삭제',
+    onOk: () => {
+      members = members.filter(x => x.id !== id);
+      save();
+      renderDashboard();
+      updateAuthorSelect();
+      renderSidebar();
+      showToast('멤버가 삭제됐습니다.');
+    }
+  });
+}
+
+// ── PHOTO CHANGE ──
+function openPhotoChange(id) {
+  const input = document.getElementById('hiddenFileInput');
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const m = members.find(x => x.id === id);
+      if (!m) return;
+      m.photo = ev.target.result;
+      save();
+      renderDashboard();
+      renderSidebar();
+      updateComposerAvatar();
+      showToast('프로필 사진이 업데이트됐습니다!');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// ── FEED ──
+function renderFeed() {
+  const feed = document.getElementById('postFeed');
+  const empty = document.getElementById('emptyFeed');
+  feed.innerHTML = '';
+  updateAuthorSelect();
+  if (posts.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  posts.slice().reverse().forEach(p => {
+    feed.appendChild(createPostCard(p));
+  });
+}
+
+function createPostCard(p) {
+  const m = members.find(x => x.id === p.authorId);
+  const name = m ? m.name : (p.authorName || '익명');
+  const photo = m ? m.photo : null;
+  const avatarHtml = photo
+    ? `<div class="post-avatar"><img src="${photo}"></div>`
+    : `<div class="post-avatar-ph">${name.slice(0,2)}</div>`;
+  const weekTag = p.weekTag ? `<span class="post-week-tag">${p.weekTag}</span>` : '';
+  const imgHtml = p.image ? `<img class="post-img" src="${p.image}">` : '';
+  const div = document.createElement('div');
+  div.className = 'post-card';
+  div.id = 'post-' + p.id;
+
+  const commentsHtml = (p.comments || []).map(c =>
+    `<div class="comment-item"><strong>${c.author}</strong>${c.text}</div>`
+  ).join('');
+
+  div.innerHTML = `
+    <div class="post-header">
+      ${avatarHtml}
+      <div class="post-meta">
+        <div class="post-author">${name} ${weekTag}</div>
+        <div class="post-time">${formatTime(p.ts)}${p.edited ? ' · <span style="color:var(--text-muted)">수정됨</span>' : ''}</div>
+      </div>
+      <div class="post-menu-wrap">
+        <button class="post-more" onclick="togglePostMenu('${p.id}', event)">⋯</button>
+        <div class="post-menu-dropdown" id="menu-${p.id}">
+          <button class="post-menu-item" onclick="openEditPost('${p.id}')">✏️ 수정하기</button>
+          <button class="post-menu-item danger" onclick="deletePost('${p.id}')">🗑️ 삭제하기</button>
+        </div>
+      </div>
+    </div>
+    ${imgHtml}
+    <div class="post-body">
+      <div class="post-text">${escapeHtml(p.text).replace(/#(\S+)/g,'<span class="post-tag">#$1</span>')}</div>
+    </div>
+    <div class="post-likes" id="likes-${p.id}">${p.likes || 0}명이 좋아합니다</div>
+    <div class="post-actions">
+      <button class="post-action-btn ${(p.liked)?'liked':''}" id="likeBtn-${p.id}" onclick="toggleLike('${p.id}')">
+        ${p.liked ? '❤️' : '🤍'} 좋아요
+      </button>
+      <button class="post-action-btn" onclick="focusComment('${p.id}')">💬 댓글</button>
+      <button class="post-action-btn" onclick="sharePost('${p.id}')">📤 공유</button>
+    </div>
+    <div class="post-comments" id="comments-${p.id}">
+      <div class="comment-list">${commentsHtml}</div>
+      <div class="comment-form">
+        <input class="comment-input" id="commentInput-${p.id}" placeholder="댓글 달기..." onkeydown="if(event.key==='Enter')addComment('${p.id}')">
+        <button class="comment-submit" onclick="addComment('${p.id}')">게시</button>
+      </div>
+    </div>`;
+  return div;
+}
+
+function previewPostImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    postImageData = ev.target.result;
+    const prev = document.getElementById('composerImgPreview');
+    prev.src = postImageData;
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitPost() {
+  const text = document.getElementById('postText').value.trim();
+  const weekTag = document.getElementById('postWeekTag').value;
+  const authorSelect = document.getElementById('postAuthorSelect');
+  const authorId = authorSelect.value;
+  const authorName = authorSelect.options[authorSelect.selectedIndex]?.text || '익명';
+  if (!text && !postImageData) { showToast('내용을 입력해주세요'); return; }
+  const post = {
+    id: Date.now().toString(), ts: Date.now(),
+    authorId, authorName, text, weekTag,
+    image: postImageData || null, likes: 0, liked: false, comments: []
+  };
+  posts.push(post);
+  save();
+  document.getElementById('postText').value = '';
+  document.getElementById('postWeekTag').value = '';
+  document.getElementById('composerImgPreview').style.display = 'none';
+  postImageData = null;
+  renderFeed();
+  renderSidebar();
+  showToast('게시글이 공유됐습니다!');
+}
+
+function toggleLike(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes = (p.likes || 0) + (p.liked ? 1 : -1);
+  save();
+  const btn = document.getElementById('likeBtn-' + id);
+  const likesEl = document.getElementById('likes-' + id);
+  if (btn) { btn.innerHTML = (p.liked?'❤️':'🤍') + ' 좋아요'; btn.className = 'post-action-btn' + (p.liked?' liked':''); }
+  if (likesEl) likesEl.textContent = p.likes + '명이 좋아합니다';
+}
+
+function addComment(postId) {
+  const input = document.getElementById('commentInput-' + postId);
+  const text = input.value.trim();
+  if (!text) return;
+  const p = posts.find(x => x.id === postId);
+  if (!p) return;
+  if (!p.comments) p.comments = [];
+  const authorSelect = document.getElementById('postAuthorSelect');
+  const authorName = authorSelect.options[authorSelect.selectedIndex]?.text || '익명';
+  p.comments.push({ author: authorName || '나', text });
+  save();
+  const list = document.querySelector('#comments-' + postId + ' .comment-list');
+  if (list) {
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.innerHTML = `<strong>${authorName || '나'}</strong>${escapeHtml(text)}`;
+    list.appendChild(item);
+  }
+  input.value = '';
+}
+
+function focusComment(id) {
+  const input = document.getElementById('commentInput-' + id);
+  if (input) input.focus();
+}
+
+function togglePostMenu(id, e) {
+  e.stopPropagation();
+  document.querySelectorAll('.post-menu-dropdown').forEach(d => {
+    if (d.id !== 'menu-' + id) d.classList.remove('open');
+  });
+  document.getElementById('menu-' + id).classList.toggle('open');
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.post-menu-dropdown').forEach(d => d.classList.remove('open'));
+});
+
+let editingPostId = null;
+let editImageData = null;
+let editImageRemoved = false;
+
+function openEditPost(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  editingPostId = id;
+  editImageData = null;
+  editImageRemoved = false;
+  document.getElementById('editPostText').value = p.text;
+  document.getElementById('editPostWeekTag').value = p.weekTag || '';
+  const prev = document.getElementById('editImgPreview');
+  const removeBtn = document.getElementById('editImgRemoveBtn');
+  if (p.image) {
+    prev.src = p.image;
+    prev.style.display = 'block';
+    removeBtn.style.display = 'inline-block';
+  } else {
+    prev.style.display = 'none';
+    removeBtn.style.display = 'none';
+  }
+  document.getElementById('menu-' + id).classList.remove('open');
+  document.getElementById('editPostModal').classList.add('open');
+}
+
+function previewEditImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editImageData = ev.target.result;
+    editImageRemoved = false;
+    const prev = document.getElementById('editImgPreview');
+    prev.src = editImageData;
+    prev.style.display = 'block';
+    document.getElementById('editImgRemoveBtn').style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeEditImage() {
+  editImageRemoved = true;
+  editImageData = null;
+  document.getElementById('editImgPreview').style.display = 'none';
+  document.getElementById('editImgRemoveBtn').style.display = 'none';
+}
+
+function saveEditPost() {
+  const text = document.getElementById('editPostText').value.trim();
+  if (!text) { showToast('내용을 입력해주세요'); return; }
+  const p = posts.find(x => x.id === editingPostId);
+  if (!p) return;
+  p.text = text;
+  p.weekTag = document.getElementById('editPostWeekTag').value;
+  if (editImageData) p.image = editImageData;
+  else if (editImageRemoved) p.image = null;
+  p.edited = true;
+  save();
+  closeModal('editPostModal');
+  renderFeed();
+  showToast('게시글이 수정됐습니다!');
+}
+
+function sharePost(id) { showToast('링크가 복사됐습니다!'); }
+
+function deletePost(id) {
+  document.querySelectorAll('.post-menu-dropdown').forEach(d => d.classList.remove('open'));
+  showConfirm({
+    icon: '📝',
+    msg: '게시글을 삭제하시겠습니까?',
+    sub: '삭제한 게시글은 복구할 수 없습니다.',
+    okLabel: '삭제',
+    onOk: () => {
+      posts = posts.filter(x => x.id !== id);
+      save();
+      renderFeed();
+      renderSidebar();
+      showToast('게시글이 삭제됐습니다.');
+    }
+  });
+}
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  // curriculum sidebar summary
+  const sc = document.getElementById('sidebarCurriculum');
+  if (sc) {
+    const activeWeeks = Object.entries(curriculum)
+      .filter(([,v]) => v && v.title)
+      .sort(([a],[b]) => Number(a)-Number(b));
+    if (activeWeeks.length === 0) {
+      sc.innerHTML = '<span style="font-style:italic;color:var(--text-muted)">대시보드에서 주제를 등록해주세요.</span>';
+    } else {
+      sc.innerHTML = activeWeeks.map(([w, v]) => {
+        const statusIcon = v.status==='active'?'🔥':v.status==='done'?'✅':'📋';
+        return `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border-light);">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);min-width:28px;padding-top:1px">${w}주</span>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text-primary);line-height:1.3">${statusIcon} ${escCurr(v.title)}</div>
+            ${v.desc ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4">${escCurr(v.desc).slice(0,60)}${v.desc.length>60?'…':''}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+  // leaderboard
+  const lb = document.getElementById('leaderboard');
+  const sorted = [...members].sort((a,b) => b.week - a.week).slice(0, 5);
+  if (lb) {
+    lb.innerHTML = sorted.length === 0 ? '<div style="font-size:13px;color:var(--text-secondary)">멤버를 추가해주세요.</div>' :
+      sorted.map((m, i) => {
+        const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+        return `<div class="leaderboard-item">
+          <span class="rank ${rankClass}">${medal||i+1}</span>
+          <span class="lb-name">${m.name}</span>
+          <span class="lb-progress">${m.week}/8주</span>
+        </div>`;
+      }).join('');
+  }
+  // stats
+  const avgWeek = members.length ? Math.round(members.reduce((s,m)=>s+m.week,0)/members.length*10)/10 : 0;
+  const complete = members.filter(m=>m.week>=8).length;
+  document.getElementById('statMembers').textContent = members.length;
+  document.getElementById('statPosts').textContent = posts.length;
+  document.getElementById('statAvgWeek').textContent = avgWeek;
+  document.getElementById('statComplete').textContent = complete;
+
+  // week tag stats
+  const wts = document.getElementById('weekTagStats');
+  if (wts) {
+    const counts = {};
+    posts.forEach(p => { if (p.weekTag) counts[p.weekTag] = (counts[p.weekTag]||0)+1; });
+    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    wts.innerHTML = entries.length === 0 ? '게시글을 작성하면 집계됩니다.'
+      : entries.map(([k,v])=>`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${k}</span><span style="font-weight:600;color:var(--grad4)">${v}개</span></div>`).join('');
+  }
+}
+
+// ── REPORTS ──
+let editingReportId = null;
+let reportExpenses = [];
+
+function renderReportList() {
+  const container = document.getElementById('reportListItems');
+  if (!container) return;
+  if (reports.length === 0) {
+    container.innerHTML = '<div class="report-empty-list"><div>📋</div>보고서가 없습니다</div>';
+    return;
+  }
+  const sorted = [...reports].sort((a,b) => b.createdAt - a.createdAt);
+  container.innerHTML = sorted.map(r => {
+    const wLabel = r.weekNum ? r.weekNum + '주차' : '주차 미지정';
+    const dateStr = r.meetingDate || '일시 미정';
+    const preview = r.topicResult ? r.topicResult.slice(0,40) : '내용 없음';
+    return `<div class="report-list-item" id="rli-${r.id}" onclick="viewReport('${r.id}')">
+      <div class="rli-week">${wLabel}</div>
+      <div class="rli-date">📅 ${dateStr}</div>
+      <div class="rli-preview">${escCurr(preview)}</div>
+    </div>`;
+  }).join('');
+}
+
+function viewReport(id) {
+  document.querySelectorAll('.report-list-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('rli-' + id);
+  if (el) el.classList.add('active');
+  const r = reports.find(x => x.id === id);
+  if (!r) return;
+  renderReportDetail(r);
+}
+
+function renderReportDetail(r) {
+  const panel = document.getElementById('reportRightPanel');
+  const wLabel = r.weekNum ? r.weekNum + '주차' : '';
+  const dateRange = r.weekNum ? getWeekDateRange(r.weekNum) : '';
+
+  // Attendee chips
+  const attendeeHtml = members.length === 0
+    ? '<span style="font-size:13px;color:var(--text-muted)">멤버 없음</span>'
+    : members.map(m => {
+        const present = (r.attendees || []).includes(m.id);
+        return `<span class="attendee-chip ${present?'present':'absent'}">${present?'✓':''} ${escCurr(m.name)}</span>`;
+      }).join('');
+
+  // Expense table
+  const expenses = r.expenses || [];
+  const total = expenses.reduce((s,e) => s + (parseInt(e.amount)||0), 0);
+  const expenseHtml = expenses.length === 0
+    ? '<span style="font-size:13px;color:var(--text-muted)">비용 내역 없음</span>'
+    : `<table class="expense-table">
+        <thead><tr><th>항목</th><th>금액 (원)</th><th>비고</th></tr></thead>
+        <tbody>${expenses.map(e => `<tr><td>${escCurr(e.item)}</td><td>${Number(e.amount||0).toLocaleString()}</td><td>${escCurr(e.note||'')}</td></tr>`).join('')}
+        <tr><td colspan="2" style="font-weight:700;text-align:right;">합계</td><td class="expense-total">${total.toLocaleString()}원</td></tr>
+        </tbody></table>`;
+
+  // Issues
+  const issueItems = (r.issues || '').split('\n').filter(s=>s.trim());
+  const issueHtml = issueItems.length === 0
+    ? '<span style="font-size:13px;color:var(--text-muted)">이슈 없음</span>'
+    : issueItems.map(s => `<div class="issue-item">${escCurr(s)}</div>`).join('');
+
+  const attendCount = (r.attendees||[]).filter(id => members.find(m=>m.id===id)).length;
+
+  panel.innerHTML = `
+    <div class="report-detail">
+      <div class="report-detail-header">
+        ${wLabel ? `<span class="report-week-pill">${wLabel}</span>` : ''}
+        <h3>${r.meetingDate || '일시 미정'} 활동보고서</h3>
+        <button class="btn-edit-report" onclick="openReportForm('${r.id}')">✏️ 수정</button>
+        <button class="btn-delete-report" onclick="deleteReport('${r.id}')">삭제</button>
+      </div>
+      <div class="report-body">
+        <div class="report-section">
+          <div class="report-section-title">📅 오프라인 모임</div>
+          <div class="report-field-row"><span class="report-field-label">일시</span><span class="report-field-value">${escCurr(r.meetingDate||'')} ${escCurr(r.meetingTime||'')}</span></div>
+          <div class="report-field-row"><span class="report-field-label">장소</span><span class="report-field-value">${escCurr(r.meetingPlace||'미기재')}</span></div>
+          <div class="report-field-row"><span class="report-field-label">참석 인원</span><span class="report-field-value">${attendCount}명 / 전체 ${members.length}명</span></div>
+          <div style="margin-top:8px"><div class="attendee-grid">${attendeeHtml}</div></div>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">📖 세부 학습주제 및 결과</div>
+          <div class="report-field-row"><span class="report-field-label">학습주제</span><span class="report-field-value">${escCurr(r.topicTitle||'미기재')}</span></div>
+          <div class="report-field-row" style="align-items:flex-start"><span class="report-field-label">학습 결과</span><span class="report-field-value" style="white-space:pre-wrap">${escCurr(r.topicResult||'미기재')}</span></div>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">💰 비용 사용 내역</div>
+          ${expenseHtml}
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">⚠️ 활동간 이슈</div>
+          ${issueHtml}
+        </div>
+      </div>
+    </div>`;
+}
+
+function openReportForm(id) {
+  editingReportId = id;
+  const r = id ? reports.find(x => x.id === id) : null;
+  reportExpenses = r ? JSON.parse(JSON.stringify(r.expenses || [])) : [];
+  if (reportExpenses.length === 0) reportExpenses.push({item:'',amount:'',note:''});
+
+  const panel = document.getElementById('reportRightPanel');
+  const curWeek = calcCurrentWeek();
+  const weekOptions = Array.from({length:8},(_,i)=>i+1).map(w =>
+    `<option value="${w}" ${(r?r.weekNum:curWeek)===w?'selected':''}>${w}주차${getWeekDateRange(w)?' ('+getWeekDateRange(w)+')':''}</option>`
+  ).join('');
+
+  // member checkboxes
+  const memberChecks = members.map(m => {
+    const checked = r ? (r.attendees||[]).includes(m.id) : false;
+    return `<label class="attendee-check-item">
+      <input type="checkbox" value="${m.id}" ${checked?'checked':''} class="attendee-cb"> ${escCurr(m.name)}
+    </label>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="report-detail">
+      <div class="report-detail-header">
+        <h3>${r ? '보고서 수정' : '새 활동보고서 작성'}</h3>
+        ${id ? `<button class="btn-edit-report" onclick="openReportForm(null)">+ 새 보고서</button>` : ''}
+      </div>
+      <div class="report-form">
+        <div class="report-section">
+          <div class="report-section-title">📅 오프라인 모임 정보</div>
+          <div class="form-group">
+            <label>학습 주차</label>
+            <select id="rf_week" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--surface);">
+              <option value="">주차 선택</option>${weekOptions}
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>모임 일자</label>
+              <input type="date" id="rf_date" value="${r?r.meetingDate||'':''}">
+            </div>
+            <div class="form-group">
+              <label>모임 시간</label>
+              <input type="time" id="rf_time" value="${r?r.meetingTime||'':''}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>모임 장소</label>
+            <input type="text" id="rf_place" placeholder="예: 회의실 A" value="${r?escCurr(r.meetingPlace||''):''}">
+          </div>
+          <div class="form-group">
+            <label>참석 인원 체크</label>
+            ${members.length === 0
+              ? '<div style="font-size:13px;color:var(--text-muted)">멤버를 먼저 추가해주세요</div>'
+              : `<div class="attendee-check-grid">${memberChecks}</div>`}
+          </div>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">📖 세부 학습주제 및 결과</div>
+          <div class="form-group">
+            <label>학습주제 (세부)</label>
+            <input type="text" id="rf_topicTitle" placeholder="예: Claude Code 설치 및 첫 자동화 실습" value="${r?escCurr(r.topicTitle||''):''}">
+          </div>
+          <div class="form-group">
+            <label>학습 결과 / 내용 요약</label>
+            <textarea class="textarea-report" id="rf_topicResult" placeholder="이번 모임에서 다룬 내용과 결과를 기록하세요...">${r?r.topicResult||'':''}</textarea>
+          </div>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">💰 비용 사용 내역</div>
+          <div id="expenseRows"></div>
+          <button class="btn-add-row" onclick="addExpenseRow()">+ 항목 추가</button>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">⚠️ 활동간 이슈</div>
+          <textarea class="textarea-report" id="rf_issues" placeholder="활동 중 발생한 이슈나 건의사항을 입력하세요. (한 줄에 하나씩)">${r?r.issues||'':''}</textarea>
+        </div>
+        <div class="report-form-actions">
+          <button class="btn-cancel" style="padding:10px 20px" onclick="renderReportList();document.getElementById('reportRightPanel').innerHTML='<div class=\\'report-detail\\'><div class=\\'report-placeholder\\'><div>📝</div><h3>보고서를 선택하거나 새로 작성하세요</h3><p>왼쪽 목록에서 보고서를 선택하거나<br>&quot;+ 새 보고서&quot; 버튼을 눌러 작성하세요.</p></div></div>'">취소</button>
+          <button class="btn-save" style="flex:2;padding:10px" onclick="saveReport()">저장하기</button>
+        </div>
+      </div>
+    </div>`;
+  renderExpenseRows();
+}
+
+function addExpenseRow() {
+  reportExpenses.push({item:'',amount:'',note:''});
+  renderExpenseRows();
+}
+
+function removeExpenseRow(idx) {
+  reportExpenses.splice(idx,1);
+  if (reportExpenses.length===0) reportExpenses.push({item:'',amount:'',note:''});
+  renderExpenseRows();
+}
+
+function renderExpenseRows() {
+  const cont = document.getElementById('expenseRows');
+  if (!cont) return;
+  cont.innerHTML = reportExpenses.map((e,i) => `
+    <div class="expense-entry">
+      <input class="form-group input" style="flex:2;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;" placeholder="항목명" value="${escCurr(e.item)}" oninput="reportExpenses[${i}].item=this.value">
+      <input class="form-group input amount" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:110px;" placeholder="금액" type="number" value="${e.amount}" oninput="reportExpenses[${i}].amount=this.value">
+      <input class="form-group input" style="flex:1.5;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;" placeholder="비고" value="${escCurr(e.note||'')}" oninput="reportExpenses[${i}].note=this.value">
+      <button class="btn-rm" onclick="removeExpenseRow(${i})">✕</button>
+    </div>`).join('');
+}
+
+function saveReport() {
+  const weekNum = parseInt(document.getElementById('rf_week').value) || null;
+  const meetingDate = document.getElementById('rf_date').value;
+  const meetingTime = document.getElementById('rf_time').value;
+  const meetingPlace = document.getElementById('rf_place').value.trim();
+  const attendees = [...document.querySelectorAll('.attendee-cb:checked')].map(cb => cb.value);
+  const topicTitle = document.getElementById('rf_topicTitle').value.trim();
+  const topicResult = document.getElementById('rf_topicResult').value.trim();
+  const issues = document.getElementById('rf_issues').value.trim();
+  if (!meetingDate) { showToast('모임 일자를 선택해주세요'); return; }
+  const expenses = reportExpenses.filter(e => e.item.trim());
+  const now = Date.now();
+  if (editingReportId) {
+    const r = reports.find(x => x.id === editingReportId);
+    if (r) Object.assign(r, {weekNum, meetingDate, meetingTime, meetingPlace, attendees, topicTitle, topicResult, issues, expenses, updatedAt: now});
+  } else {
+    reports.push({id: now.toString(), createdAt: now, weekNum, meetingDate, meetingTime, meetingPlace, attendees, topicTitle, topicResult, issues, expenses});
+  }
+  saveReports();
+  renderReportList();
+  const r = reports.find(x => x.id === (editingReportId || now.toString()));
+  if (r) { viewReport(r.id); }
+  showToast('활동보고서가 저장됐습니다!');
+}
+
+function deleteReport(id) {
+  showConfirm({
+    icon: '📋',
+    msg: '활동보고서를 삭제하시겠습니까?',
+    sub: '삭제한 보고서는 복구할 수 없습니다.',
+    okLabel: '삭제',
+    onOk: () => {
+      reports = reports.filter(x => x.id !== id);
+      saveReports();
+      renderReportList();
+      document.getElementById('reportRightPanel').innerHTML = '<div class="report-detail"><div class="report-placeholder"><div>📝</div><h3>보고서를 선택하거나 새로 작성하세요</h3><p>왼쪽 목록에서 보고서를 선택하거나<br>"+ 새 보고서" 버튼을 눌러 작성하세요.</p></div></div>';
+      showToast('보고서가 삭제됐습니다.');
+    }
+  });
+}
+function updateAuthorSelect() {
+  const sel = document.getElementById('postAuthorSelect');
+  if (!sel) return;
+  const val = sel.value;
+  sel.innerHTML = '<option value="">작성자 선택</option>' +
+    members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  sel.value = val;
+}
+
+function updateComposerAvatar() {
+  const el = document.getElementById('composerAvatar');
+  if (!el) return;
+  const first = members[0];
+  if (first && first.photo) {
+    el.innerHTML = `<img src="${first.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    el.textContent = first ? first.name.slice(0,2) : '나';
+  }
+}
+
+function formatTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return '방금 전';
+  if (diff < 3600000) return Math.floor(diff/60000) + '분 전';
+  if (diff < 86400000) return Math.floor(diff/3600000) + '시간 전';
+  return Math.floor(diff/86400000) + '일 전';
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// close modal on bg click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
+});
+</script>
+
+<!-- Firebase 동적 로드 -->
+<script>
+(function() {
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyC6D_783QYgFN81wePLe5OGLTt6OpVG54c",
+    authDomain:        "rpastudy-8a991.firebaseapp.com",
+    databaseURL:       "https://rpastudy-8a991-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "rpastudy-8a991",
+    storageBucket:     "rpastudy-8a991.firebasestorage.app",
+    messagingSenderId: "440565506922",
+    appId:             "1:440565506922:web:819953b7cb6590b8993b13"
+  };
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function initFirebase() {
+    try {
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js');
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+      console.log('✅ Firebase 연결 성공');
+    } catch(e) {
+      console.warn('Firebase SDK 로드 실패, localStorage 폴백:', e);
+      db = null;
+    }
+    appInit();
+  }
+
+  // DOM 완전 로드 후 Firebase 초기화
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFirebase);
+  } else {
+    initFirebase();
+  }
+})();
+</script>
+</body>
+</html>
